@@ -22,7 +22,7 @@
     };
     const errors = [];
     if (!value.name) errors.push('Name is required');
-    if (!value.regNo) errors.push('Registration number is required');
+   
     if (!value.title) errors.push('Assignment title is required');
     if (!value.url) errors.push('Submission URL is required');
     else if (!isValidUrl(value.url)) errors.push('Submission URL is invalid (use a full http:// or https:// link)');
