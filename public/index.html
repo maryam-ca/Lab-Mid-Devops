@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Assignment Submission Portal</title>
+<style>
+  :root {
+    --bg: #f4f6fb; --card: #ffffff; --text: #1b2333; --muted: #64708a; --border: #dde3ef;
+    --primary: #3f51d8; --primary-dark: #2f3fb3; --ok-bg: #e5f7ec; --ok: #14663a;
+    --err-bg: #fdecec; --err: #a42626; --row: #f7f9fe;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1420; --card: #181f30; --text: #e8ecf7; --muted: #93a0bd; --border: #2a3450;
+      --primary: #7b8cff; --primary-dark: #98a5ff; --ok-bg: #12301f; --ok: #7fe0a6;
+      --err-bg: #3a1818; --err: #ff9c9c; --row: #1d2538;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; }
+  header { background: linear-gradient(135deg, #3f51d8, #7b4fd8); color: #fff; padding: 2rem 1rem 4.5rem; text-align: center; }
+  header h1 { margin: 0 0 .25rem; font-size: clamp(1.4rem, 4vw, 2rem); }
+  header p { margin: 0; opacity: .9; }
+  main { max-width: 860px; margin: -3rem auto 3rem; padding: 0 1rem; display: grid; gap: 1.5rem; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; box-shadow: 0 6px 24px rgba(20, 30, 70, .08); }
+  .card h2 { margin: 0 0 1rem; font-size: 1.15rem; display: flex; align-items: center; gap: .6rem; }
+  .badge { background: var(--primary); color: #fff; font-size: .75rem; padding: .1rem .6rem; border-radius: 999px; }
+  form { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .field { display: grid; gap: .3rem; align-content: start; }
+  .field.full { grid-column: 1 / -1; }
+  label { font-weight: 600; font-size: .9rem; }
+  label .req { color: var(--err); }
+  input { padding: .65rem .8rem; font: inherit; color: var(--text); background: var(--card); border: 1px solid var(--border); border-radius: 8px; transition: border-color .15s, box-shadow .15s; }
+  input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 25%, transparent); }
+  input.invalid { border-color: var(--err); }
+  .hint { color: var(--err); font-size: .8rem; min-height: 1em; }
+  button { grid-column: 1 / -1; padding: .8rem; font: inherit; font-weight: 600; color: #fff; background: var(--primary); border: 0; border-radius: 8px; cursor: pointer; transition: background .15s; }
+  button:hover { background: var(--primary-dark); }
+  #message { display: none; padding: .75rem 1rem; border-radius: 8px; margin-top: 1rem; font-weight: 500; }
+  #message.ok { display: block; background: var(--ok-bg); color: var(--ok); }
+  #message.err { display: block; background: var(--err-bg); color: var(--err); }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+  th { text-align: left; color: var(--muted); font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; }
+  th, td { padding: .65rem .6rem; border-bottom: 1px solid var(--border); }
+  tbody tr:nth-child(even) { background: var(--row); }
+  td a { color: var(--primary); font-weight: 600; text-decoration: none; }
+  td a:hover { text-decoration: underline; }
+  .empty { text-align: center; color: var(--muted); padding: 1.5rem 0 .5rem; display: none; }
+  @media (max-width: 600px) { form { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Assignment Submission Portal</h1>
+  <p>Submit the link to your assignment and track what has been received.</p>
+</header>
+<main>
+  <section class="card">
+    <h2>New submission</h2>
+    <form id="form" novalidate>
+      <div class="field"><label for="name">Name <span class="req">*</span></label>
+        <input id="name" name="name" placeholder="e.g. Ali Khan" autocomplete="name"><span class="hint" data-for="name"></span></div>
+      <div class="field"><label for="regNo">Registration number <span class="req">*</span></label>
+        <input id="regNo" name="regNo" placeholder="e.g. FA24-BAI-001"><span class="hint" data-for="regNo"></span></div>
+      <div class="field full"><label for="title">Assignment title <span class="req">*</span></label>
+        <input id="title" name="title" placeholder="e.g. Lab Assignment 1"><span class="hint" data-for="title"></span></div>
+      <div class="field full"><label for="url">Submission URL <span class="req">*</span></label>
+        <input id="url" name="url" placeholder="https://github.com/you/assignment" inputmode="url"><span class="hint" data-for="url"></span></div>
+      <button type="submit">Submit assignment</button>
+    </form>
+    <div id="message" role="status" aria-live="polite"></div>
+  </section>
+
+  <section class="card">
+    <h2>Saved submissions <span class="badge" id="count">0</span></h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Name</th><th>Reg. No</th><th>Title</th><th>Link</th></tr></thead>
+        <tbody id="list"></tbody>
+      </table>
+    </div>
+    <p class="empty" id="empty">No submissions yet. Be the first to submit!</p>
+  </section>
+</main>
+<script src="validation.js"></script>
+<script>
+  // Uses the Node backend when available; on a static host (GitHub Pages) falls back to localStorage.
+  const form = document.getElementById('form');
+  const msg = document.getElementById('message');
+  const list = document.getElementById('list');
+  const count = document.getElementById('count');
+  const empty = document.getElementById('empty');
+  const KEY = 'submissions';
+
+  const local = {
+    list: () => JSON.parse(localStorage.getItem(KEY) || '[]'),
+    add(v) {
+      const all = local.list();
+      const rec = { id: all.length + 1, ...v, submittedAt: new Date().toISOString() };
+      localStorage.setItem(KEY, JSON.stringify(all.concat(rec)));
+      return rec;
+    },
+  };
+
+  async function load() {
+    try {
+      const r = await fetch('/api/submissions');
+      if (!r.ok || !(r.headers.get('content-type') || '').includes('json')) throw new Error();
+      return { items: await r.json(), api: true };
+    } catch {
+      return { items: local.list(), api: false };
+    }
+  }
+
+  async function render() {
+    const { items } = await load();
+    count.textContent = items.length;
+    empty.style.display = items.length ? 'none' : 'block';
+    list.replaceChildren(...items.map((s) => {
+      const tr = document.createElement('tr');
+      [s.id, s.name, s.regNo, s.title].forEach((t) => { const td = document.createElement('td'); td.textContent = t; tr.append(td); });
+      const td = document.createElement('td');
+      const a = document.createElement('a');
+      a.href = s.url; a.textContent = 'Open'; a.target = '_blank'; a.rel = 'noopener';
+      td.append(a); tr.append(td);
+      return tr;
+    }));
+  }
+
+  function show(text, ok) { msg.textContent = text; msg.className = ok ? 'ok' : 'err'; }
+
+  // Maps each validation message to the field it belongs to, for inline hints.
+  function fieldOf(error) {
+    if (/^Name/.test(error)) return 'name';
+    if (/^Registration/.test(error)) return 'regNo';
+    if (/^Assignment/.test(error)) return 'title';
+    return 'url';
+  }
+
+  function showFieldErrors(errors) {
+    form.querySelectorAll('input').forEach((i) => i.classList.remove('invalid'));
+    form.querySelectorAll('.hint').forEach((h) => { h.textContent = ''; });
+    errors.forEach((e) => {
+      const f = fieldOf(e);
+      form.elements[f].classList.add('invalid');
+      form.querySelector(`.hint[data-for="${f}"]`).textContent = e;
+    });
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(form));
+    const check = SubmissionValidation.validateSubmission(data);
+    showFieldErrors(check.errors);
+    if (!check.valid) return show('Please fix the highlighted fields.', false);
+
+    const { api } = await load();
+    if (api) {
+      const r = await fetch('/api/submissions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+      const body = await r.json();
+      if (!r.ok) { showFieldErrors(body.errors); return show(body.errors.join('; '), false); }
+    } else {
+      local.add(check.value);
+    }
+    show('Submission saved.', true);
+    form.reset();
+    render();
+  });
+
+  render();
+</script>
+</body>
+</html>

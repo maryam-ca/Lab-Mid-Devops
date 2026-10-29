@@ -1,0 +1,25 @@
+# dependencies
+node_modules/
+
+# runtime data
+data/
+
+# generated test reports (produced by CI / receiver)
+test-report.json
+test-report.json.tmp
+report.txt
+received/
+
+# env and secrets
+.env
+.env.*
+
+# logs
+*.log
+npm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

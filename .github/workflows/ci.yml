@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    # Set repo variable RUNNER_LABEL=self-hosted to run on your own machine (then localhost works directly).
+    runs-on: ${{ vars.RUNNER_LABEL || 'ubuntu-latest' }}
+    env:
+      RECEIVER_URL: ${{ secrets.RECEIVER_URL }}
+      RECEIVER_TOKEN: ${{ secrets.RECEIVER_TOKEN }}
+      MAIL_TO: ${{ secrets.MAIL_TO }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Run tests
+        run: npm run test:report
+
+      - name: Send report to local receiver
+        if: always()
+        run: npm run report:send
+
+      - name: Upload report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: |
+            test-report.json
+            report.txt
+
+      # Bonus: email report (set secrets MAIL_SERVER, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD, MAIL_TO)
+      - name: Email test report
+        if: always() && env.MAIL_TO != ''
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.MAIL_SERVER }}
+          server_port: ${{ secrets.MAIL_PORT }}
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          to: ${{ secrets.MAIL_TO }}
+          from: CI Reports <${{ secrets.MAIL_USERNAME }}>
+          subject: "[${{ job.status }}] ${{ github.repository }} @ ${{ github.sha }}"
+          body: file://report.txt
+          attachments: test-report.json
+
+  # Bonus: deploy only when every test passed on main. A failed run skips this job,
+  # so the previously published Pages version stays unchanged.
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+      - id: deployment
+        uses: actions/deploy-pages@v4
